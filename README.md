@@ -43,7 +43,9 @@ Une application web moderne et responsive pour calculer et comparer le coût exa
 .
 ├── index.html                    # Interface web principale
 ├── style.css                     # Styling responsive
-├── app.js                        # Logique client (filtres, calculs, comparaison)
+├── app.js                        # Logique client (filtres, calculs, comparaison, OCR plaque)
+├── config.js                     # Configuration (PLATE_API_URL, sans secret)
+├── worker/plate-proxy.js         # Exemple de Cloudflare Worker (proxy API plaque)
 ├── data/
 │   ├── vehicles.json             # Base de véhicules thermiques et électriques
 │   ├── electricity_rates.json    # Tarifs électricité (EDF, bornes publiques)
@@ -122,6 +124,29 @@ Modèles inclus (consommations WLTP mixte) :
 - Hyundai Kona Electric (2023) Standard 17" — 17.0 kWh/100km
 - BMW i4 (2023) eDrive35 19" — 16.8 kWh/100km
 
+## 📷 Photo de plaque
+
+1. Cliquer sur **📷 Photographier la plaque** (ouvre l'appareil photo sur mobile) ou saisir la plaque à la main.
+2. L'OCR (**Tesseract.js**, chargé depuis un CDN) s'exécute **100 % dans le navigateur** : l'image n'est jamais envoyée à un serveur. Seul le texte de la plaque (`AB-123-CD`) est envoyé au proxy si `PLATE_API_URL` est configuré.
+3. Si la plaque n'est pas identifiée (proxy absent, erreur, quota épuisé), le message « Véhicule non identifié automatiquement, choisissez-le manuellement » s'affiche et les listes Marque > Modèle > Année > Version restent utilisables.
+
+### Configuration du proxy d'identification (optionnel)
+
+- Ne **jamais** mettre de clé API dans le code front ni dans le dépôt.
+- Déployer `worker/plate-proxy.js` sur Cloudflare Workers :
+  ```bash
+  wrangler secret put PLATE_API_KEY            # clé du fournisseur (API Plaque, RegCheck…)
+  wrangler secret put PLATE_API_URL_UPSTREAM   # URL de l'API du fournisseur
+  wrangler secret put ALLOWED_ORIGIN           # ex. https://victeams.github.io
+  wrangler deploy
+  ```
+- Renseigner l'URL du Worker dans `config.js` : `window.PLATE_API_URL = "https://mon-worker.workers.dev";`
+- Le front appelle `GET <PLATE_API_URL>?plate=AB-123-CD` et attend `{ brand, model, year, version, fuel_type }`. Adapter le mapping dans le Worker selon le fournisseur.
+
+### Limites de l'OCR
+
+Précision variable selon la lumière, l'angle, le flou et le type de plaque (reflets, plaques sales ou de collection). Toujours vérifier et corriger la plaque lue. Le premier usage télécharge le moteur OCR (connexion requise).
+
 ## 💡 Utilisation
 
 1. **Sélectionner le type de véhicule** : Thermique ou Électrique
@@ -143,31 +168,15 @@ Modèles inclus (consommations WLTP mixte) :
 ### vehicles.json
 ```json
 {
-  "vehicles": {
-    "thermal": [
-      {
-        "brand": "Renault",
-        "model": "Grand Scénic IV",
-        "year": 2020,
-        "version": "1.7 Blue dCi 120 ch",
-        "consumption": 5.2,
-        "co2_emissions": 136
-      }
-    ],
-    "electric": [
-      {
-        "brand": "Tesla",
-        "model": "Model 3",
-        "year": 2023,
-        "version": "RWD 18\"",
-        "battery_usable_kwh": 50,
-        "consumption": 14.8,
-        "heat_pump": true
-      }
-    ]
-  }
+  "thermal": [
+    { "brand": "Renault", "model": "Grand Scénic IV", "year": 2020, "version": "1.7 Blue dCi 120 ch", "consumption": 5.2, "fuel_type": "Diesel" }
+  ],
+  "electric": [
+    { "brand": "Tesla", "model": "Model 3", "year": 2023, "version": "RWD", "consumption": 14.8, "battery_kwh": 57.5, "heat_pump": true, "wheel_size": 18 }
+  ]
 }
 ```
+`fuel_type` (thermique) : `Diesel`, `Essence`, `GPL` ou `E85`. Consommation en L/100 km (thermique) ou kWh/100 km (électrique).
 
 ### prices.json
 ```json
