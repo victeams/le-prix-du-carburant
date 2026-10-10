@@ -1,107 +1,17 @@
 const vehicleData = {
   thermal: [
-    {
-      brand: "Renault",
-      model: "Grand Scénic IV",
-      year: 2020,
-      version: "1.7 Blue dCi 120 ch",
-      type: "thermal",
-      consumption: 5.2,
-      fuel: "diesel",
-      priceKey: "gazole"
-    },
-    {
-      brand: "Renault",
-      model: "Clio V",
-      year: 2023,
-      version: "1.0 TCe 100 ch",
-      type: "thermal",
-      consumption: 4.8,
-      fuel: "essence",
-      priceKey: "sp95_e10"
-    },
-    {
-      brand: "Peugeot",
-      model: "308",
-      year: 2023,
-      version: "1.2 PureTech 130 ch",
-      type: "thermal",
-      consumption: 5.1,
-      fuel: "essence",
-      priceKey: "sp95_e10"
-    },
-    {
-      brand: "Citroën",
-      model: "C5 Aircross",
-      year: 2022,
-      version: "1.5 Blue HDi 130 ch",
-      type: "thermal",
-      consumption: 4.9,
-      fuel: "diesel",
-      priceKey: "gazole"
-    },
-    {
-      brand: "Toyota",
-      model: "Yaris",
-      year: 2023,
-      version: "1.5 Hybrid",
-      type: "thermal",
-      consumption: 3.4,
-      fuel: "essence",
-      priceKey: "sp95_e10"
-    }
+    { brand: "Renault", model: "Grand Scénic IV", year: 2020, version: "1.7 Blue dCi 120 ch", consumption: 5.2 },
+    { brand: "Renault", model: "Clio V", year: 2023, version: "1.0 TCe 100 ch", consumption: 4.8 },
+    { brand: "Peugeot", model: "308", year: 2023, version: "1.2 PureTech 130 ch", consumption: 5.1 },
+    { brand: "Citroën", model: "C5 Aircross", year: 2022, version: "1.5 Blue HDi 130 ch", consumption: 4.9 },
+    { brand: "Toyota", model: "Yaris", year: 2023, version: "1.5 Hybrid", consumption: 3.4 }
   ],
   electric: [
-    {
-      brand: "Tesla",
-      model: "Model 3",
-      year: 2023,
-      version: "RWD 18\"",
-      type: "electric",
-      consumption: 14.8,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "Renault",
-      model: "Zoé",
-      year: 2023,
-      version: "Life 17\"",
-      type: "electric",
-      consumption: 16.0,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "Volkswagen",
-      model: "ID.3",
-      year: 2023,
-      version: "Pro 18\"",
-      type: "electric",
-      consumption: 15.5,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "Hyundai",
-      model: "Kona Electric",
-      year: 2023,
-      version: "Standard 17\"",
-      type: "electric",
-      consumption: 17.0,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "BMW",
-      model: "i4",
-      year: 2023,
-      version: "eDrive35 19\"",
-      type: "electric",
-      consumption: 16.8,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    }
+    { brand: "Tesla", model: "Model 3", year: 2023, version: "RWD 18\"", consumption: 14.8 },
+    { brand: "Renault", model: "Zoé", year: 2023, version: "Life 17\"", consumption: 16.0 },
+    { brand: "Volkswagen", model: "ID.3", year: 2023, version: "Pro 18\"", consumption: 15.5 },
+    { brand: "Hyundai", model: "Kona Electric", year: 2023, version: "Standard 17\"", consumption: 17.0 },
+    { brand: "BMW", model: "i4", year: 2023, version: "eDrive35 19\"", consumption: 16.8 }
   ]
 };
 
@@ -124,28 +34,33 @@ const electricityRates = {
   custom: 0.2
 };
 
-// DOM Elements
+const priceState = { data: fallbackPrices };
+
 const vehicleType = document.getElementById("vehicle-type");
 const brandSelect = document.getElementById("brand");
 const modelSelect = document.getElementById("model");
 const yearSelect = document.getElementById("year");
 const versionSelect = document.getElementById("version");
-const consumptionCustom = document.getElementById("consumption-custom");
 const fuelPriceSelect = document.getElementById("fuel-price");
 const electricityRateSelect = document.getElementById("electricity-rate");
 const customElectricityPrice = document.getElementById("custom-electricity-price");
+const consumptionCustom = document.getElementById("consumption-custom");
 const selectedConsumption = document.getElementById("selected-consumption");
 const cost100km = document.getElementById("cost-100km");
 const comparisonTable = document.getElementById("comparison-table");
 const fuelUpdateBadge = document.getElementById("fuel-update-badge");
 const licensePlateInput = document.getElementById("license-plate");
+const cameraButton = document.getElementById("camera-button");
+const platePhotoInput = document.getElementById("plate-photo-input");
+const platePreview = document.getElementById("plate-preview");
+const ocrStatus = document.getElementById("ocr-status");
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(value);
 }
 
@@ -154,6 +69,23 @@ function updateFuelBadge() {
   const dateText = now.toLocaleDateString("fr-FR");
   const timeText = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   fuelUpdateBadge.textContent = `Prix des carburants mis à jour le ${dateText} à ${timeText}`;
+}
+
+async function loadFuelPrices() {
+  try {
+    const response = await fetch("./data/prices.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    if (json && json.fuels) {
+      priceState.data = { ...fallbackPrices, ...json.fuels };
+      updateCalculation();
+    }
+  } catch (error) {
+    console.warn("Prix locaux utilisés à la place des données réseau:", error.message);
+    priceState.data = fallbackPrices;
+  }
 }
 
 function getVehicles() {
@@ -200,9 +132,7 @@ function populateModelOptions() {
 function populateYearOptions() {
   const years = [...new Set(
     getVehicles()
-      .filter(
-        (v) => v.brand === brandSelect.value && v.model === modelSelect.value
-      )
+      .filter((v) => v.brand === brandSelect.value && v.model === modelSelect.value)
       .map((v) => v.year)
   )].sort((a, b) => b - a);
 
@@ -284,7 +214,7 @@ function calculateCost100km() {
 
   if (vehicleType.value === "thermal") {
     const fuelKey = fuelPriceSelect.value;
-    const fuelPrice = fallbackPrices[fuelKey] ?? 1.5;
+    const fuelPrice = priceState.data[fuelKey] ?? 1.5;
     return consumption * fuelPrice;
   }
 
@@ -297,12 +227,12 @@ function renderComparisonTable() {
   const baseConsumption = vehicle ? Number(vehicle.consumption || 0) : 0;
 
   const rows = [
-    ["Gazole", "€/L", fallbackPrices.gazole, baseConsumption * fallbackPrices.gazole],
-    ["SP95-E10", "€/L", fallbackPrices.sp95_e10, baseConsumption * fallbackPrices.sp95_e10],
-    ["SP98", "€/L", fallbackPrices.sp98, baseConsumption * fallbackPrices.sp98],
-    ["GPL", "€/L", fallbackPrices.gpl, baseConsumption * fallbackPrices.gpl],
+    ["Gazole", "€/L", priceState.data.gazole, baseConsumption * priceState.data.gazole],
+    ["SP95-E10", "€/L", priceState.data.sp95_e10, baseConsumption * priceState.data.sp95_e10],
+    ["SP98", "€/L", priceState.data.sp98, baseConsumption * priceState.data.sp98],
+    ["GPL", "€/L", priceState.data.gpl, baseConsumption * priceState.data.gpl],
     ["Recharge domicile", "€/kWh", getElectricityRate(), baseConsumption * 1.12 * getElectricityRate()],
-    ["Recharge autoroute", "€/kWh", electricityRates.public_dc, baseConsumption * 1.12 * electricityRates.public_dc],
+    ["Recharge autoroute", "€/kWh", electricityRates.public_dc, baseConsumption * 1.12 * electricityRates.public_dc]
   ];
 
   comparisonTable.innerHTML = "";
@@ -331,12 +261,103 @@ function updateCalculation() {
   renderComparisonTable();
 }
 
-// Event listeners
+function normalizePlateText(value) {
+  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (cleaned.length <= 5) {
+    return cleaned;
+  }
+  if (cleaned.length === 7 || cleaned.length === 8) {
+    return cleaned.replace(/(.{2})(.{3})(.{2})/, "$1-$2-$3");
+  }
+  if (cleaned.length === 9) {
+    return cleaned.replace(/(.{2})(.{3})(.{2})(.{2})/, "$1-$2-$3-$4");
+  }
+  return cleaned;
+}
+
+function extractPlateFromText(rawText) {
+  if (!rawText) return null;
+
+  const candidates = rawText
+    .split(/\s+/)
+    .map((part) => part.replace(/[^A-Z0-9-]/gi, ""))
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    const normalized = normalizePlateText(candidate);
+    if (/^[A-Z]{2}-\d{3}-[A-Z]{2}$/.test(normalized) || /^[A-Z]{2}\d{3}[A-Z]{2}$/.test(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
+function setOcrStatus(message, type = "") {
+  ocrStatus.textContent = message;
+  ocrStatus.classList.remove("error", "success");
+  if (type) {
+    ocrStatus.classList.add(type);
+  }
+}
+
+function readPlateFromImage(file) {
+  if (!file || !window.Tesseract) {
+    setOcrStatus("Le support OCR n’est pas disponible dans ce navigateur.", "error");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    platePreview.src = reader.result;
+    platePreview.classList.remove("hidden");
+    setOcrStatus("Analyse de la plaque…", "");
+
+    Tesseract.recognize(reader.result, "eng", {
+      logger: (m) => {
+        if (m && m.status === "recognizing text") {
+          setOcrStatus(`Lecture OCR… ${Math.round(m.progress * 100)}%`);
+        }
+      }
+    })
+      .then(({ data }) => {
+        const plate = extractPlateFromText(data?.text || "");
+        if (plate) {
+          licensePlateInput.value = plate;
+          setOcrStatus(`Plaque détectée : ${plate}`, "success");
+          return;
+        }
+        setOcrStatus("Aucune plaque valide n’a été reconnue sur l’image. Réessayez ou saisissez-la manuellement.", "error");
+      })
+      .catch(() => {
+        setOcrStatus("L’analyse OCR a échoué. Vérifiez la photo ou saisissez la plaque manuellement.", "error");
+      });
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function handlePlateInput() {
+  const value = normalizePlateText(licensePlateInput.value);
+  licensePlateInput.value = value;
+}
+
+cameraButton.addEventListener("click", () => {
+  platePhotoInput.click();
+});
+
+platePhotoInput.addEventListener("change", (event) => {
+  const [file] = event.target.files;
+  if (!file) return;
+  readPlateFromImage(file);
+  event.target.value = "";
+});
+
+licensePlateInput.addEventListener("input", handlePlateInput);
 vehicleType.addEventListener("change", () => {
   populateBrandOptions();
   updateCalculation();
 });
-
 brandSelect.addEventListener("change", populateModelOptions);
 modelSelect.addEventListener("change", populateYearOptions);
 yearSelect.addEventListener("change", populateVersionOptions);
@@ -346,11 +367,12 @@ fuelPriceSelect.addEventListener("change", updateCalculation);
 electricityRateSelect.addEventListener("change", updateCalculation);
 customElectricityPrice.addEventListener("input", updateCalculation);
 
-// Initialize app
 function init() {
   updateFuelBadge();
   populateBrandOptions();
   updateCalculation();
+  setOcrStatus("Saisissez ou photographiez la plaque pour lancer l’analyse.");
+  loadFuelPrices();
 }
 
 init();
