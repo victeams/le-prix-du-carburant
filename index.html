@@ -218,7 +218,7 @@
       </header>
 
       <div id="fuel-update-badge" class="update-badge">
-        Prix des carburants mis à jour le 10/10/2026 à 06:00
+        Prix des carburants mis à jour le --/--/---- à --:--
       </div>
 
       <main class="container">
@@ -275,13 +275,13 @@
             <div class="field">
               <label for="electricity-rate">Tarif électricité (si électrique)</label>
               <select id="electricity-rate">
-                <option value="edf_blue_base">EDF Bleu - Base (0,2167 €/kWh)</option>
-                <option value="edf_blue_off_peak">EDF Bleu - Heures Creuses (0,1637 €/kWh)</option>
-                <option value="edf_tempo_blue">EDF Tempo - Bleu (0,1918 €/kWh)</option>
-                <option value="edf_tempo_white">EDF Tempo - Blanc (0,2821 €/kWh)</option>
-                <option value="edf_tempo_red">EDF Tempo - Rouge (0,7526 €/kWh)</option>
-                <option value="public_ac">Borne AC publique (0,35 €/kWh)</option>
-                <option value="public_dc">Borne DC rapide autoroute (0,59 €/kWh)</option>
+                <option value="edf_blue_base">EDF Bleu - Base</option>
+                <option value="edf_blue_off_peak">EDF Bleu - Heures Creuses</option>
+                <option value="edf_tempo_blue">EDF Tempo - Bleu</option>
+                <option value="edf_tempo_white">EDF Tempo - Blanc</option>
+                <option value="edf_tempo_red">EDF Tempo - Rouge</option>
+                <option value="public_ac">Borne AC publique</option>
+                <option value="public_dc">Borne DC rapide autoroute</option>
                 <option value="custom">Tarif personnalisé</option>
               </select>
             </div>
@@ -338,8 +338,18 @@
         ]
       };
 
-      const prices = { gazole: 1.489, sp95_e10: 1.659, sp98: 1.749, e85: 0.769, gpl: 0.849 };
-      const rates = { edf_blue_base: 0.2167, edf_blue_off_peak: 0.1637, edf_tempo_blue: 0.1918, edf_tempo_white: 0.2821, edf_tempo_red: 0.7526, public_ac: 0.35, public_dc: 0.59, custom: 0.2 };
+      // Prix et tarifs par défaut
+      let prices = { gazole: 1.489, sp95_e10: 1.659, sp98: 1.749, e85: 0.769, gpl: 0.849 };
+      const rates = { 
+        edf_blue_base: 0.2167, 
+        edf_blue_off_peak: 0.1637, 
+        edf_tempo_blue: 0.1918, 
+        edf_tempo_white: 0.2821, 
+        edf_tempo_red: 0.7526, 
+        public_ac: 0.35, 
+        public_dc: 0.59, 
+        custom: 0.2 
+      };
 
       const vehicleType = document.getElementById("vehicle-type");
       const brandSelect = document.getElementById("brand");
@@ -353,6 +363,29 @@
       const selectedConsumption = document.getElementById("selected-consumption");
       const cost100km = document.getElementById("cost-100km");
       const comparisonTable = document.getElementById("comparison-table");
+      const fuelUpdateBadge = document.getElementById("fuel-update-badge");
+
+      // Charger les prix depuis data/prices.json
+      async function loadPrices() {
+        try {
+          const response = await fetch('data/prices.json');
+          const data = await response.json();
+          prices = data.fuels || prices;
+          
+          // Mettre à jour le badge avec la date
+          if (data.last_updated) {
+            const date = new Date(data.last_updated);
+            const dateText = date.toLocaleDateString("fr-FR");
+            const timeText = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            fuelUpdateBadge.textContent = `Prix des carburants mis à jour le ${dateText} à ${timeText}`;
+          }
+          
+          updateCalculation();
+        } catch (error) {
+          console.log("Impossible de charger les prix depuis data/prices.json, utilisation des valeurs par défaut");
+          fuelUpdateBadge.textContent = "Prix des carburants (valeurs par défaut)";
+        }
+      }
 
       function getVehicles() {
         return vehicleData[vehicleType.value] || vehicleData.thermal;
@@ -475,10 +508,10 @@
 
       function renderComparison() {
         const rows = [
-          ["Gazole", "€/L", prices.gazole],
-          ["SP95-E10", "€/L", prices.sp95_e10],
-          ["SP98", "€/L", prices.sp98],
-          ["GPL", "€/L", prices.gpl],
+          ["Gazole", "€/L", prices.gazole || 1.489],
+          ["SP95-E10", "€/L", prices.sp95_e10 || 1.659],
+          ["SP98", "€/L", prices.sp98 || 1.749],
+          ["GPL", "€/L", prices.gpl || 0.849],
           ["Recharge domicile", "€/kWh", rates.edf_blue_base],
           ["Recharge autoroute", "€/kWh", rates.public_dc],
         ];
@@ -505,8 +538,8 @@
       electricityRateSelect.addEventListener("change", updateCalculation);
       customElectricityPrice.addEventListener("input", updateCalculation);
 
-      populateBrandOptions();
-      updateCalculation();
+      // Initialiser le site
+      loadPrices();
     </script>
   </body>
 </html>
