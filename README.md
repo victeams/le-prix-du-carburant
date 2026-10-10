@@ -254,3 +254,9 @@ Pour toute question ou signalement de bug, ouvrir une issue sur GitHub.
 
 **Dernière mise à jour** : 10 octobre 2026  
 **URL de production** : https://victeams.github.io/le-prix-du-carburant/
+
+## Photo de plaque (mobile)
+
+- Le champ « Plaque d'immatriculation » ouvre l'appareil photo arrière (`capture="environment"`), compatible Safari iOS et Chrome Android ; aucune permission `getUserMedia` supplémentaire n'est requise, seulement HTTPS (`https://victeams.github.io/le-prix-du-carburant/`).
+- L'OCR (Tesseract.js) lit la plaque au format `AB-123-CD` ; si elle est déjà associée à un véhicule (stocké localement), celui-ci est sélectionné et le coût recalculé. Sinon, choisis le véhicule puis clique sur « Associer ».
+- La publication se fait depuis `main` : fusionner la PR pour mettre le site à jour. Des balises meta anti-cache sont ajoutées.
