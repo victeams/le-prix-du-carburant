@@ -1,0 +1,54 @@
+{
+  "electricity_rates": {
+    "edf_blue": {
+      "name": "EDF Tarif Bleu",
+      "base_rate": 0.2167,
+      "peak_hours": 0.2435,
+      "off_peak_hours": 0.1637
+    },
+    "edf_tempo": {
+      "name": "EDF Tempo",
+      "blue_day": {
+        "peak": 0.1918,
+        "off_peak": 0.1218
+      },
+      "white_day": {
+        "peak": 0.2821,
+        "off_peak": 0.1818
+      },
+      "red_day": {
+        "peak": 0.7526,
+        "off_peak": 0.5361
+      }
+    },
+    "public_chargers": {
+      "ac_standard": {
+        "name": "Bornes AC publiques (7-22 kW)",
+        "rate": 0.35,
+        "loss_coefficient": 1.12
+      },
+      "dc_fast_highway": {
+        "name": "Bornes DC rapides Autoroute (50-350 kW)",
+        "rate": 0.59,
+        "loss_coefficient": 1.08
+      }
+    },
+    "home_charging": {
+      "name": "Recharge à domicile (EDF Bleu Base)",
+      "rate": 0.2167,
+      "loss_coefficient": 1.12
+    },
+    "home_charging_off_peak": {
+      "name": "Recharge à domicile (Heures Creuses)",
+      "rate": 0.1637,
+      "loss_coefficient": 1.12
+    },
+    "user_custom": {
+      "name": "Tarif personnalisé",
+      "rate": null,
+      "loss_coefficient": 1.12
+    }
+  },
+  "last_updated": "2024-10-10",
+  "note": "Tarifs indicatifs - consultez votre fournisseur pour les tarifs exacts. Les coefficients de perte incluent les pertes de conversion du chargeur."
+}
