@@ -152,6 +152,16 @@
             <tbody id="comparison-table"></tbody>
           </table>
         </section>
+
+        <section class="panel" id="stations-section" hidden>
+          <h2>Prix par station</h2>
+          <table>
+            <thead>
+              <tr><th>Station</th><th>Gazole</th><th>SP95-E10</th><th>SP98</th><th>E85</th><th>GPL</th></tr>
+            </thead>
+            <tbody id="stations-table"></tbody>
+          </table>
+        </section>
       </main>
     </div>
 
@@ -353,9 +363,50 @@
       electricityRateSelect.addEventListener("change", updateCalculation);
       customElectricityPrice.addEventListener("input", updateCalculation);
 
+      function renderStations(stations) {
+        const section = document.getElementById("stations-section");
+        const body = document.getElementById("stations-table");
+        body.innerHTML = "";
+        const fmt = (v) => (typeof v === "number" ? formatCurrency(v) : "–");
+        (stations || []).forEach((st) => {
+          const row = document.createElement("tr");
+          const name = document.createElement("td");
+          name.textContent = st.name;
+          row.appendChild(name);
+          ["gazole", "sp95_e10", "sp98", "e85", "gpl"].forEach((k) => {
+            const td = document.createElement("td");
+            td.textContent = fmt(st[k]);
+            row.appendChild(td);
+          });
+          body.appendChild(row);
+        });
+        section.hidden = !(stations && stations.length);
+      }
+
+      async function loadPrices() {
+        try {
+          const response = await fetch(`data/prices.json?t=${Date.now()}`, { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          const avg = data.average_prices || data.fuels;
+          if (!avg) throw new Error("format invalide");
+          prices = { ...prices, ...avg };
+          const date = new Date(data.last_updated);
+          if (!isNaN(date)) {
+            fuelUpdateBadge.textContent = `Prix des carburants mis à jour le ${date.toLocaleDateString("fr-FR")} à ${date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
+          }
+          renderStations(data.stations);
+        } catch (error) {
+          console.warn("Prix par défaut utilisés:", error);
+          fuelUpdateBadge.textContent = "Prix indicatifs (mise à jour automatique indisponible)";
+        }
+        updateCalculation();
+      }
+
       // Initialiser
       populateBrandOptions();
       updateCalculation();
+      loadPrices();
     </script>
   </body>
 </html>
