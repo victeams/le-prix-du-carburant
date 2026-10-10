@@ -1,0 +1,246 @@
+{
+  "vehicles": {
+    "thermal": [
+      {
+        "id": "renault_grand_scenic_iv_2020_1.7_blue_dci_120",
+        "brand": "Renault",
+        "model": "Grand Scénic IV",
+        "year": 2020,
+        "engine": "1.7 Blue dCi",
+        "power_hp": 120,
+        "fuel_type": "Diesel",
+        "transmission": "Manual",
+        "consumption": {
+          "wltp_mixed": 5.2,
+          "wltp_urban": 6.1,
+          "wltp_highway": 4.3
+        },
+        "co2_emissions": 136,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "renault_clio_2023_1.0_tce_100",
+        "brand": "Renault",
+        "model": "Clio V",
+        "year": 2023,
+        "engine": "1.0 TCe",
+        "power_hp": 100,
+        "fuel_type": "Petrol",
+        "transmission": "Manual",
+        "consumption": {
+          "wltp_mixed": 4.8,
+          "wltp_urban": 5.9,
+          "wltp_highway": 3.9
+        },
+        "co2_emissions": 110,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "renault_megane_2022_1.5_blue_dci_115",
+        "brand": "Renault",
+        "model": "Mégane IV",
+        "year": 2022,
+        "engine": "1.5 Blue dCi",
+        "power_hp": 115,
+        "fuel_type": "Diesel",
+        "transmission": "Manual",
+        "consumption": {
+          "wltp_mixed": 4.2,
+          "wltp_urban": 5.1,
+          "wltp_highway": 3.4
+        },
+        "co2_emissions": 109,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "peugeot_308_2023_1.2_puretech_130",
+        "brand": "Peugeot",
+        "model": "308",
+        "year": 2023,
+        "engine": "1.2 PureTech",
+        "power_hp": 130,
+        "fuel_type": "Petrol",
+        "transmission": "Automatic",
+        "consumption": {
+          "wltp_mixed": 5.1,
+          "wltp_urban": 6.2,
+          "wltp_highway": 4.1
+        },
+        "co2_emissions": 114,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "citroen_c5_aircross_2022_1.5_blue_hdi_130",
+        "brand": "Citroën",
+        "model": "C5 Aircross",
+        "year": 2022,
+        "engine": "1.5 Blue HDi",
+        "power_hp": 130,
+        "fuel_type": "Diesel",
+        "transmission": "Automatic",
+        "consumption": {
+          "wltp_mixed": 4.9,
+          "wltp_urban": 6.0,
+          "wltp_highway": 4.1
+        },
+        "co2_emissions": 128,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "toyota_yaris_2023_1.5_hybrid",
+        "brand": "Toyota",
+        "model": "Yaris",
+        "year": 2023,
+        "engine": "1.5 Hybrid",
+        "power_hp": 120,
+        "fuel_type": "Petrol Hybrid",
+        "transmission": "Automatic CVT",
+        "consumption": {
+          "wltp_mixed": 3.4,
+          "wltp_urban": 3.9,
+          "wltp_highway": 3.1
+        },
+        "co2_emissions": 79,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "fiat_500_2022_1.0_firefly_70",
+        "brand": "Fiat",
+        "model": "500",
+        "year": 2022,
+        "engine": "1.0 Firefly",
+        "power_hp": 70,
+        "fuel_type": "Petrol",
+        "transmission": "Manual",
+        "consumption": {
+          "wltp_mixed": 4.5,
+          "wltp_urban": 5.4,
+          "wltp_highway": 3.7
+        },
+        "co2_emissions": 102,
+        "euro_norm": "Euro 6d"
+      }
+    ],
+    "electric": [
+      {
+        "id": "tesla_model_3_2023_rwd",
+        "brand": "Tesla",
+        "model": "Model 3",
+        "year": 2023,
+        "battery_kwh": 54,
+        "battery_usable_kwh": 50,
+        "trim": "RWD",
+        "wheel_size_inches": 18,
+        "heat_pump": true,
+        "consumption": {
+          "wltp_mixed": 14.8,
+          "wltp_highway": 16.2
+        },
+        "range_km": 505,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "renault_zoe_2023_75kw",
+        "brand": "Renault",
+        "model": "Zoé",
+        "year": 2023,
+        "battery_kwh": 52,
+        "battery_usable_kwh": 45,
+        "trim": "Life",
+        "wheel_size_inches": 16,
+        "heat_pump": false,
+        "consumption": {
+          "wltp_mixed": 16.0,
+          "wltp_highway": 18.5
+        },
+        "range_km": 390,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "volkswagen_id3_2023_pro",
+        "brand": "Volkswagen",
+        "model": "ID.3",
+        "year": 2023,
+        "battery_kwh": 62,
+        "battery_usable_kwh": 58,
+        "trim": "Pro",
+        "wheel_size_inches": 18,
+        "heat_pump": true,
+        "consumption": {
+          "wltp_mixed": 15.5,
+          "wltp_highway": 17.8
+        },
+        "range_km": 500,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "hyundai_kona_electric_2023_39kw",
+        "brand": "Hyundai",
+        "model": "Kona Electric",
+        "year": 2023,
+        "battery_kwh": 39,
+        "battery_usable_kwh": 35,
+        "trim": "Standard",
+        "wheel_size_inches": 17,
+        "heat_pump": false,
+        "consumption": {
+          "wltp_mixed": 17.0,
+          "wltp_highway": 19.5
+        },
+        "range_km": 305,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "peugeot_e208_2023_50kw",
+        "brand": "Peugeot",
+        "model": "e-208",
+        "year": 2023,
+        "battery_kwh": 50,
+        "battery_usable_kwh": 45,
+        "trim": "Allure",
+        "wheel_size_inches": 17,
+        "heat_pump": false,
+        "consumption": {
+          "wltp_mixed": 15.2,
+          "wltp_highway": 17.5
+        },
+        "range_km": 360,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "bmw_i4_2023_40kw",
+        "brand": "BMW",
+        "model": "i4",
+        "year": 2023,
+        "battery_kwh": 81,
+        "battery_usable_kwh": 75,
+        "trim": "eDrive35",
+        "wheel_size_inches": 19,
+        "heat_pump": true,
+        "consumption": {
+          "wltp_mixed": 16.8,
+          "wltp_highway": 19.2
+        },
+        "range_km": 510,
+        "euro_norm": "Euro 6d"
+      },
+      {
+        "id": "nissan_leaf_2023_40kw",
+        "brand": "Nissan",
+        "model": "Leaf",
+        "year": 2023,
+        "battery_kwh": 40,
+        "battery_usable_kwh": 36,
+        "trim": "Acenta",
+        "wheel_size_inches": 16,
+        "heat_pump": false,
+        "consumption": {
+          "wltp_mixed": 17.8,
+          "wltp_highway": 20.5
+        },
+        "range_km": 300,
+        "euro_norm": "Euro 6d"
+      }
+    ]
+  }
+}
