@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Le prix du carburant</title>
+    <meta
+      name="description"
+      content="Calculer le coût exact au 100 km pour les véhicules thermiques et électriques."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">⚡</span>
+          <span>Le prix du carburant</span>
+        </div>
+      </header>
+
+      <div id="fuel-update-badge" class="update-badge">
+        Prix des carburants mis à jour le --/--/---- à --:--
+      </div>
+
+      <main class="container">
+        <section class="panel">
+          <h1>Calculer le coût réel au 100 km</h1>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="vehicle-type">Type de véhicule</label>
+              <select id="vehicle-type">
+                <option value="thermal">Thermique</option>
+                <option value="electric">Électrique</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="license-plate">Immatriculation</label>
+              <input id="license-plate" type="text" placeholder="AB-123-CD" maxlength="9" />
+            </div>
+
+            <div class="field">
+              <label for="brand">Marque</label>
+              <select id="brand"></select>
+            </div>
+
+            <div class="field">
+              <label for="model">Modèle</label>
+              <select id="model"></select>
+            </div>
+
+            <div class="field">
+              <label for="year">Année</label>
+              <select id="year"></select>
+            </div>
+
+            <div class="field">
+              <label for="version">Version / finition</label>
+              <select id="version"></select>
+            </div>
+
+            <div class="field field-wide">
+              <label for="consumption-custom">Ajuster ma consommation réelle (ordinateur de bord)</label>
+              <input id="consumption-custom" type="number" step="0.1" min="0" placeholder="Ex : 6.4" />
+            </div>
+          </div>
+
+          <div class="section-row fuel-row">
+            <div class="field">
+              <label for="fuel-price">Prix du carburant</label>
+              <select id="fuel-price">
+                <option value="gazole">Gazole</option>
+                <option value="sp95_e10">SP95-E10</option>
+                <option value="sp98">SP98</option>
+                <option value="e85">E85</option>
+                <option value="gpl">GPL</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="electricity-rate">Tarif électricité</label>
+              <select id="electricity-rate">
+                <option value="edf_blue_base">EDF Bleu - Base</option>
+                <option value="edf_blue_off_peak">EDF Bleu - Heures Creuses</option>
+                <option value="edf_tempo_blue">EDF Tempo - Bleu</option>
+                <option value="edf_tempo_white">EDF Tempo - Blanc</option>
+                <option value="edf_tempo_red">EDF Tempo - Rouge</option>
+                <option value="public_ac">Borne AC publique</option>
+                <option value="public_dc">Borne DC rapide autoroute</option>
+                <option value="custom">Tarif personnalisé</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="custom-electricity-price">Tarif personnalisé (€ / kWh)</label>
+              <input id="custom-electricity-price" type="number" step="0.001" placeholder="0.20" />
+            </div>
+          </div>
+
+          <div class="summary">
+            <div class="summary-card">
+              <span>Consommation actuelle</span>
+              <strong id="selected-consumption">-- L/100 km</strong>
+            </div>
+            <div class="summary-card">
+              <span>Coût estimé</span>
+              <strong id="cost-100km">-- € / 100 km</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel comparison-panel">
+          <h2>Comparatif des coûts</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Prix de référence</th>
+                <th>Coût estimé / 100 km</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-table"></tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
