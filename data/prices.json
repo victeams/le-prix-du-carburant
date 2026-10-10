@@ -1,11 +1,11 @@
 {
-  "last_updated": "2026-10-10T12:00:00Z",
+  "last_updated": "2026-10-10T07:09:17.917478+00:00",
   "fuels": {
-    "gazole": 2.345,
-    "sp95_e10": 2.14,
-    "sp98": 2.235,
-    "e85": 0.91,
-    "gpl": 1.055
+    "gazole": 1.5,
+    "sp95_e10": 1.65,
+    "sp98": 1.75,
+    "e85": 0.8,
+    "gpl": 0.85
   },
-  "source": "Prix observés en France - 10/10/2026"
+  "source": "data.economie.gouv.fr - Fichier instantané"
 }
