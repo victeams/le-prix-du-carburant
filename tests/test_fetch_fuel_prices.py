@@ -11,6 +11,35 @@ from scripts import fetch_fuel_prices
 
 
 class FuelPriceTests(unittest.TestCase):
+    def test_uses_current_dataset_and_extracts_its_fuel_fields(self):
+        self.assertIn(
+            "prix-des-carburants-en-france-flux-instantane-v2",
+            fetch_fuel_prices.API_URL,
+        )
+        record = {
+            "gazole_prix": "1.60",
+            "gazole_maj": "2026-10-10T10:00:00Z",
+            "e10_prix": "1.70",
+            "e10_maj": "2026-10-10T11:00:00Z",
+            "sp98_prix": "1.80",
+            "sp98_maj": "2026-10-10T12:00:00Z",
+            "e85_prix": "0.80",
+            "e85_maj": "2026-10-10T13:00:00Z",
+            "gplc_prix": "0.90",
+            "gplc_maj": "2026-10-10T14:00:00Z",
+        }
+
+        prices, updated = fetch_fuel_prices.extract_prices_from_api([record])
+
+        self.assertEqual(prices, {
+            "gazole": 1.6,
+            "sp95_e10": 1.7,
+            "sp98": 1.8,
+            "e85": 0.8,
+            "gpl": 0.9,
+        })
+        self.assertEqual(updated, datetime(2026, 10, 10, 14, tzinfo=timezone.utc))
+
     def test_extracts_medians_from_numbered_price_fields(self):
         record = {
             "prix_1_nom": "Gazole",
