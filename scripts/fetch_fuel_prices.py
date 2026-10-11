@@ -14,7 +14,7 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 OUTPUT_PATH = os.path.join(DATA_DIR, "prices.json")
 API_URL = (
     "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
-    "prix-carburants-fichier-instantane-v2/records"
+    "prix-des-carburants-en-france-flux-instantane-v2/records"
 )
 PAGE_SIZE = 100
 MAX_PAGES = 100
@@ -28,6 +28,13 @@ FUEL_ALIASES = {
 }
 PRICE_FIELDS = ("valeur", "prix", "montant", "prixlitre", "prixaulitre")
 DATE_FIELDS = ("maj", "datemaj", "miseajour", "horodatage", "date", "lastupdated")
+FUEL_API_FIELDS = {
+    "gazole": ("gazoleprix", "gazolemaj"),
+    "sp95_e10": ("e10prix", "e10maj"),
+    "sp98": ("sp98prix", "sp98maj"),
+    "e85": ("e85prix", "e85maj"),
+    "gpl": ("gplcprix", "gplcmaj"),
+}
 
 
 def normalize(value):
@@ -94,6 +101,12 @@ def observations_from_record(record, inherited_date=None):
 
     record_date = field_value(record, set(DATE_FIELDS)) or inherited_date
     normalized_fields = {normalize(key): value for key, value in record.items()}
+
+    for key, (price_field, date_field) in FUEL_API_FIELDS.items():
+        price = parse_price(normalized_fields.get(price_field))
+        updated = parse_date(normalized_fields.get(date_field) or record_date)
+        if price is not None and updated is not None:
+            observations.append((key, price, updated))
 
     # The Open Data API can return one fuel observation per nested object.
     label = field_value(record, {"carburant", "nom", "typecarburant", "fueltype", "nomcarburant"})
