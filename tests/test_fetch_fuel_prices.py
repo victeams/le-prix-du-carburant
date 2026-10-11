@@ -16,6 +16,7 @@ class FuelPriceTests(unittest.TestCase):
             "prix-des-carburants-en-france-flux-instantane-v2",
             fetch_fuel_prices.API_URL,
         )
+        self.assertTrue(fetch_fuel_prices.API_URL.endswith("/exports/json"))
         record = {
             "gazole_prix": "1.60",
             "gazole_maj": "2026-10-10T10:00:00Z",
@@ -39,6 +40,12 @@ class FuelPriceTests(unittest.TestCase):
             "gpl": 0.9,
         })
         self.assertEqual(updated, datetime(2026, 10, 10, 14, tzinfo=timezone.utc))
+
+    def test_fetches_full_export_as_a_json_array(self):
+        records = [{"gazole_prix": "1.60"}]
+        with patch.object(fetch_fuel_prices, "fetch_json", return_value=records) as fetch:
+            self.assertEqual(fetch_fuel_prices.fetch_all_records(), records)
+        fetch.assert_called_once_with(f"{fetch_fuel_prices.API_URL}?limit=-1")
 
     def test_extracts_medians_from_numbered_price_fields(self):
         record = {
