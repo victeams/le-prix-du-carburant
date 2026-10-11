@@ -53,7 +53,13 @@ function priceLabel(key) {
 }
 
 function updateFuelBadge() {
-  if (!prices || !prices.fuels || !prices.last_updated) {
+  const requiredFuels = ["gazole", "sp95_e10", "sp98", "e85", "gpl"];
+  if (
+    prices?.status !== "available" ||
+    !prices.fuels ||
+    !prices.last_updated ||
+    requiredFuels.some((key) => !isValidPrice(prices.fuels[key]))
+  ) {
     elements.fuelUpdateBadge.textContent = "Prix des carburants indisponibles — aucune actualisation vérifiée.";
     return;
   }

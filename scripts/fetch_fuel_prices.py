@@ -14,12 +14,14 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 OUTPUT_PATH = os.path.join(DATA_DIR, "prices.json")
 API_URL = (
     "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/"
-    "prix-carburants-fichier-instantane-v2/records?limit=10000"
+    "prix-carburants-fichier-instantane-v2/records"
 )
+PAGE_SIZE = 100
+MAX_PAGES = 100
 
 FUEL_ALIASES = {
     "gazole": {"gazole", "diesel"},
-    "sp95_e10": {"sp95e10", "sp95", "95e10"},
+    "sp95_e10": {"sp95e10", "95e10"},
     "sp98": {"sp98", "98"},
     "e85": {"e85", "ethanol", "superethanol"},
     "gpl": {"gpl", "gplc"},
@@ -150,12 +152,34 @@ def extract_prices_from_api(records):
     return prices, latest_source_update
 
 
-def fetch_json(url=API_URL, timeout=45):
+def fetch_json(url, timeout=45):
     request = Request(url, headers={"User-Agent": "le-prix-du-carburant/1.0"})
     with urlopen(request, timeout=timeout) as response:
         if response.status != 200:
             raise RuntimeError(f"L'API a répondu avec le statut HTTP {response.status}.")
         return json.loads(response.read().decode("utf-8"))
+
+
+def fetch_all_records():
+    records = []
+    total_count = None
+    for page in range(MAX_PAGES):
+        offset = page * PAGE_SIZE
+        payload = fetch_json(f"{API_URL}?limit={PAGE_SIZE}&offset={offset}")
+        if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+            raise ValueError("Réponse inattendue de l'API : le tableau results est absent.")
+        page_records = payload["results"]
+        records.extend(page_records)
+        if total_count is None and isinstance(payload.get("total_count"), int):
+            total_count = payload["total_count"]
+        present = {key for record in records for key, _, _ in observations_from_record(record)}
+        if set(FUEL_ALIASES).issubset(present):
+            return records
+        if not page_records or len(page_records) < PAGE_SIZE:
+            break
+        if total_count is not None and len(records) >= total_count:
+            break
+    return records
 
 
 def validate_payload(payload):
@@ -166,6 +190,7 @@ def validate_payload(payload):
         "last_updated": source_updated.isoformat(timespec="seconds").replace("+00:00", "Z"),
         "fuels": prices,
         "source": "data.economie.gouv.fr — prix médians des observations disponibles",
+        "status": "available",
     }
 
 
@@ -180,7 +205,7 @@ def save_prices(payload):
 
 def main():
     try:
-        payload = validate_payload(fetch_json())
+        payload = validate_payload({"results": fetch_all_records()})
         save_prices(payload)
     except (HTTPError, URLError, TimeoutError, OSError, UnicodeDecodeError,
             json.JSONDecodeError, ValueError, RuntimeError) as error:
