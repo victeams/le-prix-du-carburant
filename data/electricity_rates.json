@@ -1,4 +1,5 @@
 {
+  "loss_coefficient": 1.12,
   "electricity_rates": {
     "edf_blue": {
       "name": "EDF Tarif Bleu",

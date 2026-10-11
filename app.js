@@ -79,14 +79,15 @@ function getFuelPrice(key) {
 function getRateEntries() {
   const rates = electricityRates?.electricity_rates;
   if (!rates) return [];
+  const defaultLoss = electricityRates.loss_coefficient || rates.home_charging?.loss_coefficient || 1.12;
   const entries = [
-    ["edf_blue_base", rates.edf_blue?.name ? `${rates.edf_blue.name} - Base` : "EDF Bleu - Base", rates.edf_blue?.base_rate, 1.12],
-    ["edf_blue_off_peak", "EDF Bleu - Heures creuses", rates.edf_blue?.off_peak_hours, 1.12],
-    ["edf_tempo_blue", "EDF Tempo - Jour bleu (heures pleines)", rates.edf_tempo?.blue_day?.peak, 1.12],
-    ["edf_tempo_white", "EDF Tempo - Jour blanc (heures pleines)", rates.edf_tempo?.white_day?.peak, 1.12],
-    ["edf_tempo_red", "EDF Tempo - Jour rouge (heures pleines)", rates.edf_tempo?.red_day?.peak, 1.12],
-    ["public_ac", rates.public_chargers?.ac_standard?.name, rates.public_chargers?.ac_standard?.rate, rates.public_chargers?.ac_standard?.loss_coefficient],
-    ["public_dc", rates.public_chargers?.dc_fast_highway?.name, rates.public_chargers?.dc_fast_highway?.rate, rates.public_chargers?.dc_fast_highway?.loss_coefficient],
+    ["edf_blue_base", rates.edf_blue?.name ? `${rates.edf_blue.name} - Base` : "EDF Bleu - Base", rates.edf_blue?.base_rate, defaultLoss],
+    ["edf_blue_off_peak", "EDF Bleu - Heures creuses", rates.edf_blue?.off_peak_hours, rates.home_charging_off_peak?.loss_coefficient || defaultLoss],
+    ["edf_tempo_blue", "EDF Tempo - Jour bleu (heures pleines)", rates.edf_tempo?.blue_day?.peak, defaultLoss],
+    ["edf_tempo_white", "EDF Tempo - Jour blanc (heures pleines)", rates.edf_tempo?.white_day?.peak, defaultLoss],
+    ["edf_tempo_red", "EDF Tempo - Jour rouge (heures pleines)", rates.edf_tempo?.red_day?.peak, defaultLoss],
+    ["public_ac", rates.public_chargers?.ac_standard?.name, rates.public_chargers?.ac_standard?.rate, rates.public_chargers?.ac_standard?.loss_coefficient || defaultLoss],
+    ["public_dc", rates.public_chargers?.dc_fast_highway?.name, rates.public_chargers?.dc_fast_highway?.rate, rates.public_chargers?.dc_fast_highway?.loss_coefficient || defaultLoss],
   ];
   return entries.filter(([, , rate]) => isValidPrice(rate));
 }

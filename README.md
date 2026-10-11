@@ -1,256 +1,66 @@
 # Le prix du carburant 🚗⚡
 
-Une application web moderne et responsive pour calculer et comparer le coût exact au 100 km en euros (€/100 km) pour tout type de véhicule (thermique et électrique).
+Application web statique, en français, pour estimer et comparer le coût au 100 km de véhicules thermiques et électriques. Les calculs utilisent les fichiers JSON du dépôt ; aucun prix de carburant fictif n'est utilisé comme prix actuel.
 
-## 🎯 Fonctionnalités
+## Utilisation
 
-- **Calcul précis du coût au 100 km** :
-  - Thermique : Consommation (L/100 km) × Prix au litre (€)
-  - Électrique : [Consommation (kWh/100 km) × 1,12] × Prix du kWh (€)
+1. Sélectionnez **Thermique** ou **Électrique**, puis le véhicule dans les filtres marque, modèle, année et version.
+2. Pour un véhicule thermique, choisissez le carburant. Pour un véhicule électrique, choisissez un tarif de recharge.
+3. Vous pouvez remplacer la consommation constructeur par votre consommation mesurée.
+4. Le coût apparaît avec un comparatif adapté au type de véhicule. Une donnée de prix absente est affichée comme indisponible, jamais remplacée par un prix inventé.
 
-- **Recherche intelligente des véhicules** :
-  - Filtres en cascade : Marque > Modèle > Année > Version/Finitions
-  - Champ d'immatriculation (format AB-123-CD) avec fallback manuel
-  - Données ADEME complètes pour véhicules thermiques et électriques
+Les consommations véhicules sont des valeurs WLTP indicatives. Le coût électrique applique le coefficient de pertes enregistré dans les tarifs (12 % par défaut ; 8 % pour les bornes DC rapides lorsqu'indiqué).
 
-- **Tarification électricité complète** :
-  - EDF Tarif Bleu (Base, Heures Creuses)
-  - EDF Tempo (Bleu, Blanc, Rouge)
-  - Bornes AC publiques (0,35 €/kWh)
-  - Bornes DC rapides autoroute (0,59 €/kWh)
-  - Tarif personnalisé
-  - Coefficient de perte de +12 % appliqué automatiquement
+## Lancer localement
 
-- **Prix du carburant en temps réel** :
-  - Mise à jour automatique chaque jour à 6h00 via GitHub Actions
-  - Données depuis l'API officielle du gouvernement français
-  - Badge d'actualisation en temps réel
-  - Fallback vers prix de référence en cas d'indisponibilité
-
-- **Tableau comparatif dynamique** :
-  - Gazole vs SP95-E10 vs SP98 vs GPL
-  - Recharge électrique Domicile vs Autoroute
-  - Mise à jour instantanée selon la sélection
-
-- **Interface responsive** :
-  - Design moderne et sobre
-  - Compatible mobile, tablette, desktop
-  - Champ "Ajuster ma consommation réelle (ordinateur de bord)"
-
-## 📦 Structure du projet
-
-```
-.
-├── index.html                    # Interface web principale
-├── style.css                     # Styling responsive
-├── app.js                        # Logique client (filtres, calculs, comparaison)
-├── data/
-│   ├── vehicles.json             # Base de véhicules thermiques et électriques
-│   ├── electricity_rates.json    # Tarifs électricité (EDF, bornes publiques)
-│   └── prices.json               # Prix carburants (mis à jour quotidiennement)
-├── scripts/
-│   └── fetch_fuel_prices.py      # Script Python pour récupérer les prix
-└── .github/workflows/
-    └── update_prices.yml         # Workflow GitHub Actions quotidien (6h00)
-```
-
-## 🚀 Déploiement GitHub Pages
-
-### Configuration automatique
-
-1. **Accès au dépôt** : https://github.com/victeams/le-prix-du-carburant
-
-2. **Activation de GitHub Pages** :
-   - Aller dans **Settings > Pages**
-   - Sélectionner **"Deploy from a branch"**
-   - Branche : **main**
-   - Dossier : **/ (root)**
-   - Cliquer sur **Save**
-
-3. **Accès au site** :
-   - URL : `https://victeams.github.io/le-prix-du-carburant/`
-   - Attendre 1-2 minutes pour la première publication
-
-### Troubleshooting 404
-
-Si vous avez une erreur 404 :
-
-1. **Vérifier que `index.html` est à la racine** (✓ c'est le cas)
-2. **Vérifier la branche déployée** : Settings > Pages doit afficher "Deployed from main /"
-3. **Vider le cache navigateur** : Ctrl+Maj+R (Windows) ou Cmd+Maj+R (Mac)
-4. **Vérifier les Actions GitHub** : l'action de déploiement doit être verte (✓)
-
-## 🔄 Mise à jour quotidienne des prix
-
-### Workflow automatique
-
-Le fichier `.github/workflows/update_prices.yml` exécute chaque jour à 6h00 UTC :
+Les navigateurs ne chargent généralement pas les fichiers JSON avec `file://`. Depuis la racine du dépôt, lancez un serveur HTTP :
 
 ```bash
-python scripts/fetch_fuel_prices.py
+python3 -m http.server 8000
 ```
 
-Le script :
-- Interroge l'API `data.economie.gouv.fr`
-- Récupère les prix réels (Gazole, SP95-E10, SP98, E85, GPL)
-- Sauvegarde dans `data/prices.json` avec horodatage ISO 8601
-- Commite automatiquement les modifications
+Ouvrez ensuite <http://localhost:8000>.
 
-### Déclenchement manuel
+## Données et prix carburants
 
-- Aller dans **Actions > Update fuel prices**
-- Cliquer sur **Run workflow**
-- Les prix sont mis à jour immédiatement
+- `data/vehicles.json` contient les véhicules et consommations WLTP.
+- `data/electricity_rates.json` contient des tarifs de référence indicatifs. Ils ne sont pas actualisés automatiquement ; vérifiez votre contrat et les tarifs des opérateurs avant de les utiliser.
+- `data/prices.json` contient le dernier jeu complet de prix obtenu et validé. Au départ, les prix et leur date sont volontairement vides : le site ne prétend donc pas qu'ils sont à jour.
 
-## 📊 Base de données des véhicules
+Le script `scripts/fetch_fuel_prices.py` interroge le jeu de données public français `prix-carburants-fichier-instantane-v2` sur data.economie.gouv.fr. Il calcule les prix médians des observations trouvées pour le gazole, le SP95-E10, le SP98, l'E85 et le GPL. Il n'enregistre le nouveau fichier que si les cinq carburants ont des prix plausibles et une date de mise à jour source vérifiable. En cas d'erreur, il échoue sans remplacer les données existantes.
 
-### Thermiques
+L'actualisation automatisée est définie dans `.github/workflows/update_prices.yml` :
 
-Modèles inclus (données ADEME) :
-- **Renault Grand Scénic IV (2020)** 1.7 Blue dCi 120 ch — 5.2 L/100km
-- Renault Clio V (2023) 1.0 TCe 100 ch — 4.8 L/100km
-- Peugeot 308 (2023) 1.2 PureTech 130 ch — 5.1 L/100km
-- Citroën C5 Aircross (2022) 1.5 Blue HDi 130 ch — 4.9 L/100km
-- Toyota Yaris (2023) 1.5 Hybrid — 3.4 L/100km
+- planifiée chaque jour à 06:00 UTC ;
+- déclenchable manuellement dans **Actions > Update fuel prices > Run workflow** ;
+- validation par le script avant toute modification ;
+- commit uniquement si les données validées ont changé.
 
-### Électriques
+Pour autoriser le commit automatisé, le dépôt doit accepter les écritures du `GITHUB_TOKEN` (Settings > Actions > General > Workflow permissions : **Read and write permissions**). Si l'API, son schéma ou les données requises ne sont pas disponibles, le workflow échoue et conserve les prix précédents. Vérifiez le journal de l'exécution dans l'onglet **Actions**.
 
-Modèles inclus (consommations WLTP mixte) :
-- Tesla Model 3 (2023) RWD 18" — 14.8 kWh/100km
-- Renault Zoé (2023) Life 17" — 16.0 kWh/100km
-- Volkswagen ID.3 (2023) Pro 18" — 15.5 kWh/100km
-- Hyundai Kona Electric (2023) Standard 17" — 17.0 kWh/100km
-- BMW i4 (2023) eDrive35 19" — 16.8 kWh/100km
-
-## 💡 Utilisation
-
-1. **Sélectionner le type de véhicule** : Thermique ou Électrique
-2. **Saisir l'immatriculation** (optionnel) : Format AB-123-CD (recherche API avec fallback)
-3. **Choisir la marque, modèle, année, version** via les filtres en cascade
-4. **Ajuster la consommation réelle** si vous connaissez la valeur (ordinateur de bord)
-5. **Sélectionner le carburant/tarif électricité**
-6. **Voir le coût calculé au 100 km** et le tableau comparatif
-
-## 🔧 Technologie
-
-- **Frontend** : HTML5 + CSS3 + JavaScript Vanilla (pas de dépendance)
-- **Backend/Data** : JSON statique + Python pour actualisations
-- **CI/CD** : GitHub Actions (workflow quotidien)
-- **Hosting** : GitHub Pages (statique)
-
-## 📝 Format des données
-
-### vehicles.json
-```json
-{
-  "vehicles": {
-    "thermal": [
-      {
-        "brand": "Renault",
-        "model": "Grand Scénic IV",
-        "year": 2020,
-        "version": "1.7 Blue dCi 120 ch",
-        "consumption": 5.2,
-        "co2_emissions": 136
-      }
-    ],
-    "electric": [
-      {
-        "brand": "Tesla",
-        "model": "Model 3",
-        "year": 2023,
-        "version": "RWD 18\"",
-        "battery_usable_kwh": 50,
-        "consumption": 14.8,
-        "heat_pump": true
-      }
-    ]
-  }
-}
-```
-
-### prices.json
-```json
-{
-  "last_updated": "2026-10-10T06:00:00Z",
-  "fuels": {
-    "gazole": 1.489,
-    "sp95_e10": 1.659,
-    "sp98": 1.749,
-    "e85": 0.769,
-    "gpl": 0.849
-  }
-}
-```
-
-### electricity_rates.json
-```json
-{
-  "rates": {
-    "edf_blue_base": {
-      "label": "EDF Tarif Bleu - Base",
-      "price_per_kwh": 0.2167
-    },
-    "public_dc": {
-      "label": "Borne DC rapide autoroute",
-      "price_per_kwh": 0.59
-    }
-  },
-  "loss_coefficient": 1.12
-}
-```
-
-## 📱 Responsive Design
-
-- **Desktop** : Grille 3 colonnes
-- **Tablette** : Grille 2 colonnes (< 1024px)
-- **Mobile** : Grille 1 colonne (< 820px)
-
-## 🛠️ Développement local
-
-### Prérequis
-- Python 3.11+ (pour tester le script de mise à jour)
-- Navigateur moderne (Chrome, Firefox, Safari, Edge)
-
-### Installation
+Pour lancer le même script manuellement :
 
 ```bash
-git clone https://github.com/victeams/le-prix-du-carburant.git
-cd le-prix-du-carburant
+python3 scripts/fetch_fuel_prices.py
 ```
 
-### Serveur local
+Cette commande nécessite un accès réseau. Une réussite signifie que des données datées ont été récupérées ; cela ne garantit pas que chaque tarif local soit représentatif de votre station.
+
+## Reconnaissance de plaque
+
+Aucune reconnaissance de plaque n'est intégrée : le dépôt ne configure pas de fournisseur d'API, de clé ou de service dont le fonctionnement et les coûts puissent être vérifiés. La plaque ne permet donc pas d'identifier un véhicule dans cette application. Sélectionnez-le manuellement. Une intégration future nécessite de choisir et documenter un service externe, ses coûts, sa politique de confidentialité et sa configuration.
+
+## Vérifications et déploiement
+
+Le projet n'a pas de dépendances front-end ni de système de build. Les pages GitHub Pages peuvent servir les fichiers statiques directement depuis la racine du dépôt. Après activation de GitHub Pages dans **Settings > Pages**, choisissez la branche de déploiement et le dossier `/`.
+
+Vérifications locales disponibles :
 
 ```bash
-# Python 3.10+
-python -m http.server 8000
-
-# Accès : http://localhost:8000
+python3 -m json.tool data/vehicles.json > /dev/null
+python3 -m json.tool data/prices.json > /dev/null
+python3 -m json.tool data/electricity_rates.json > /dev/null
+python3 -m py_compile scripts/fetch_fuel_prices.py
 ```
 
-### Tester le script de mise à jour
-
-```bash
-python scripts/fetch_fuel_prices.py
-```
-
-## 📄 Licence
-
-Public Domain — Utilisation libre à titre personnel ou commercial.
-
-## 🤝 Contribution
-
-Les améliorations sont bienvenues :
-- Ajouter des véhicules
-- Améliorer l'interface
-- Optimiser le script de récupération des prix
-- Intégrer une vraie API de plaque d'immatriculation
-
-## 📧 Support
-
-Pour toute question ou signalement de bug, ouvrir une issue sur GitHub.
-
----
-
-**Dernière mise à jour** : 10 octobre 2026  
-**URL de production** : https://victeams.github.io/le-prix-du-carburant/
+La récupération réelle des prix doit être vérifiée avec une exécution manuelle du script ou du workflow, puisque l'accès réseau à la source est nécessaire.
