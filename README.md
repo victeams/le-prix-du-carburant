@@ -31,7 +31,7 @@ Le script `scripts/fetch_fuel_prices.py` télécharge l'export JSON complet du j
 
 L'actualisation automatisée est définie dans `.github/workflows/update_prices.yml` :
 
-- planifiée chaque jour à 06:00 UTC ;
+- planifiée deux fois par semaine (lundi et jeudi) à 06:00 UTC ;
 - déclenchable manuellement dans **Actions > Update fuel prices > Run workflow** ;
 - validation par le script avant toute modification ;
 - commit uniquement si les données validées ont changé.
@@ -46,9 +46,29 @@ python3 scripts/fetch_fuel_prices.py
 
 Cette commande nécessite un accès réseau. Une réussite signifie que des données datées ont été récupérées ; cela ne garantit pas que chaque tarif local soit représentatif de votre station.
 
-## Reconnaissance de plaque
+## Plaque d'immatriculation (format SIV)
 
-Aucune reconnaissance de plaque n'est intégrée : le dépôt ne configure pas de fournisseur d'API, de clé ou de service dont le fonctionnement et les coûts puissent être vérifiés. La plaque ne permet donc pas d'identifier un véhicule dans cette application. Sélectionnez-le manuellement. Une intégration future nécessite de choisir et documenter un service externe, ses coûts, sa politique de confidentialité et sa configuration.
+Le formulaire **Tester une plaque française** vérifie localement le format `AA-123-AA` (lettres I, O et U exclues). Il n'identifie pas le véhicule : aucune recherche externe n'est faite. Une recherche future devra être isolée derrière une fonction dédiée, avec fournisseur, coûts et confidentialité documentés.
+
+### Scan, historique et coût (depuis un téléphone)
+
+Lancez `node server.js` sur un PC du même réseau Wi‑Fi, puis ouvrez `http://<IP-du-PC>:3000` sur le téléphone. Le bouton **📷 Scanner une plaque** ouvre l'appareil photo ; la lecture (OCR Tesseract.js, chargé depuis jsDelivr, connexion requise) se fait sur l'appareil, l'image n'est pas envoyée. Sans HTTPS, certains navigateurs mobiles refusent la caméra directe mais proposent la galerie.
+
+- **Historique du véhicule** : non disponible sans fournisseur agréé (HistoVec exige le consentement du propriétaire, les API tierces sont payantes et avec clé). Brancher le fournisseur dans `lookupVehicleByPlate` (`vehicle-lookup.js`) ; il doit renvoyer `{ id, brand, model, year, fuel_type, consumption, history }`. Tant qu'il renvoie `null`, rien n'est inventé.
+- **Coût aux 100 km** : consommation WLTP × prix du carburant de `data/prices.json`. Routes : `GET /plaque/:plaque`, `GET /vehicules`, `GET /vehicules/:id/cout`.
+- **Prix du carburant** : actualisés 2 fois par semaine (lundi et jeudi, 06:00 UTC) par le workflow `update_prices.yml`, à partir des données officielles data.economie.gouv.fr.
+
+Tests : `node --test tests/plate.test.js tests/server.test.js tests/cost.test.js`
+
+### API HTTP (sans clé ni dépendance)
+
+```bash
+node server.js            # port 3000 par défaut, ou PORT=8080 node server.js
+curl http://localhost:3000/plaque/ab-123-cd   # {"valid":true,"plate":"AB-123-CD"}
+curl http://localhost:3000/plaque/AB-12-CD    # {"valid":false,"plate":"AB-12-CD"}
+```
+
+Tests : `node --test tests/`
 
 ## Vérifications et déploiement
 

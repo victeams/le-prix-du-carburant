@@ -16,6 +16,11 @@ const elements = {
   comparisonTable: document.getElementById("comparison-table"),
   fuelUpdateBadge: document.getElementById("fuel-update-badge"),
   dataError: document.getElementById("data-error"),
+  plateForm: document.getElementById("plate-form"),
+  plateNumber: document.getElementById("plate-number"),
+  plateResult: document.getElementById("plate-result"),
+  platePhoto: document.getElementById("plate-photo"),
+  plateVehicle: document.getElementById("plate-vehicle"),
 };
 
 let vehicles = { thermal: [], electric: [] };
@@ -261,7 +266,77 @@ function normalizeVehicleData(data) {
   };
 }
 
+async function checkPlate(value) {
+  const result = validateFrenchPlate(value);
+  elements.plateNumber.value = result.plate;
+  elements.plateVehicle.textContent = "";
+  elements.plateResult.textContent = result.valid
+    ? `Format valide : ${result.plate}.`
+    : "Format invalide. Saisissez une plaque au format AA-123-AA.";
+  elements.plateResult.classList.toggle("is-valid", result.valid);
+  elements.plateResult.classList.toggle("is-invalid", !result.valid);
+  if (!result.valid) return;
+
+  try {
+    const response = await fetch(`/plaque/${encodeURIComponent(result.plate)}`);
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+    if (!data.vehicle) {
+      elements.plateVehicle.textContent = data.message || "Véhicule non identifié : choisissez-le manuellement.";
+      return;
+    }
+    const { brand, model, year } = data.vehicle;
+    const cost = data.cost?.cost;
+    elements.plateVehicle.textContent = `${brand} ${model} ${year}` +
+      (cost != null ? ` — ${formatCurrency(cost)} / 100 km` : " — coût indisponible (prix non actualisés).");
+  } catch {
+    elements.plateVehicle.textContent = "Recherche indisponible (lancez le site via `node server.js`). Choisissez le véhicule manuellement.";
+  }
+}
+
+let ocrScriptPromise = null;
+function loadOcr() {
+  ocrScriptPromise ??= new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    script.onload = () => resolve(window.Tesseract);
+    script.onerror = () => reject(new Error("OCR indisponible"));
+    document.head.appendChild(script);
+  });
+  return ocrScriptPromise;
+}
+
+async function scanPlatePhoto(file) {
+  elements.plateResult.classList.remove("is-valid", "is-invalid");
+  elements.plateVehicle.textContent = "";
+  elements.plateResult.textContent = "Lecture de la photo en cours… (traitée sur votre appareil)";
+  try {
+    const Tesseract = await loadOcr();
+    const { data } = await Tesseract.recognize(file, "eng");
+    const plate = extractPlateFromText(data.text);
+    if (!plate) {
+      elements.plateResult.textContent = "Aucune plaque lisible. Cadrez mieux ou saisissez-la à la main.";
+      elements.plateResult.classList.add("is-invalid");
+      return;
+    }
+    await checkPlate(plate);
+  } catch {
+    elements.plateResult.textContent = "Scan indisponible (connexion requise pour charger le lecteur). Saisissez la plaque à la main.";
+    elements.plateResult.classList.add("is-invalid");
+  }
+}
+
 async function init() {
+  elements.plateForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    checkPlate(elements.plateNumber.value);
+  });
+  elements.platePhoto.addEventListener("change", () => {
+    const [file] = elements.platePhoto.files;
+    if (file) scanPlatePhoto(file);
+    elements.platePhoto.value = "";
+  });
+
   try {
     const [vehicleData, priceData, rateData] = await Promise.all([
       loadJson("data/vehicles.json"),
