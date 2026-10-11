@@ -16,11 +16,22 @@ const elements = {
   comparisonTable: document.getElementById("comparison-table"),
   fuelUpdateBadge: document.getElementById("fuel-update-badge"),
   dataError: document.getElementById("data-error"),
+  vehicleImageInput: document.getElementById("vehicle-image-input"),
+  photoTrigger: document.getElementById("photo-trigger"),
+  uploadTrigger: document.getElementById("upload-trigger"),
+  vehicleScanPreview: document.getElementById("vehicle-scan-preview"),
+  vehicleScanStatus: document.getElementById("vehicle-scan-status"),
+  vehicleScanResult: document.getElementById("vehicle-scan-result"),
+  vehicleScanDetails: document.getElementById("vehicle-scan-details"),
+  vehicleScanApply: document.getElementById("vehicle-scan-apply"),
+  vehicleScanRetry: document.getElementById("vehicle-scan-retry"),
 };
 
 let vehicles = { thermal: [], electric: [] };
 let prices = null;
 let electricityRates = null;
+let detectedVehicleCandidate = null;
+let currentVehicleImageData = "";
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("fr-FR", {
@@ -261,6 +272,113 @@ function normalizeVehicleData(data) {
   };
 }
 
+function applyVehicleCandidate(candidate) {
+  if (!candidate) return;
+  const type = candidate.type === "electric" ? "electric" : "thermal";
+  elements.vehicleType.value = type;
+  populateBrands();
+
+  const matches = getVehicles().filter((vehicle) => vehicle.brand === candidate.brand);
+  if (!matches.length) return;
+
+  const brandMatches = [...new Set(matches.map((vehicle) => vehicle.brand))];
+  if (brandMatches.length) {
+    elements.brand.value = candidate.brand;
+    populateModels();
+  }
+
+  const modelMatches = getVehicles().filter(
+    (vehicle) => vehicle.brand === candidate.brand && vehicle.model === candidate.model
+  );
+  if (modelMatches.length) {
+    elements.model.value = candidate.model;
+    populateYears();
+  }
+
+  const yearMatches = getVehicles().filter(
+    (vehicle) => vehicle.brand === candidate.brand && vehicle.model === candidate.model && String(vehicle.year) === String(candidate.year)
+  );
+  if (yearMatches.length) {
+    elements.year.value = String(candidate.year);
+    populateVersions();
+  }
+
+  const targetVehicle = getVehicles().find((vehicle) => {
+    const brandMatchesValue = vehicle.brand === candidate.brand;
+    const modelMatchesValue = vehicle.model === candidate.model;
+    const yearMatchesValue = String(vehicle.year) === String(candidate.year);
+    const versionMatchesValue = candidate.version ? vehicle.version === candidate.version : true;
+    return brandMatchesValue && modelMatchesValue && yearMatchesValue && versionMatchesValue;
+  });
+
+  if (targetVehicle) {
+    elements.version.value = targetVehicle.id;
+    if (elements.vehicleType.value === "thermal") {
+      elements.fuelPrice.value = getFuelKey(targetVehicle);
+    }
+    updateCalculation();
+  }
+}
+
+function setVehicleScanResult(candidate) {
+  if (!candidate) {
+    elements.vehicleScanResult.hidden = true;
+    elements.vehicleScanStatus.textContent = "Aucune suggestion disponible. Vous pouvez choisir manuellement.";
+    return;
+  }
+
+  detectedVehicleCandidate = candidate;
+  elements.vehicleScanDetails.innerHTML = `
+    <div><strong>Type :</strong> ${candidate.type === "electric" ? "Électrique" : "Thermique"}</div>
+    <div><strong>Marque :</strong> ${candidate.brand}</div>
+    <div><strong>Modèle :</strong> ${candidate.model}</div>
+    <div><strong>Année :</strong> ${candidate.year}</div>
+    <div><strong>Confiance :</strong> ${candidate.confidence}%</div>
+  `;
+  elements.vehicleScanResult.hidden = false;
+}
+
+async function analyzeVehicleImage(file) {
+  if (!file) {
+    throw new Error("Aucun fichier sélectionné.");
+  }
+
+  const data = new FormData();
+  data.append("image", file);
+  const response = await fetch("http://localhost:3001/api/analyze-vehicle", {
+    method: "POST",
+    body: data,
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.candidate) {
+    throw new Error(payload?.error || "L’analyse du véhicule a échoué.");
+  }
+  return payload.candidate;
+}
+
+function handleFileSelection(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    currentVehicleImageData = reader.result;
+    elements.vehicleScanPreview.src = reader.result;
+    elements.vehicleScanPreview.hidden = false;
+    elements.vehicleScanStatus.textContent = "Image chargée. Analyse du véhicule en cours…";
+  };
+  reader.readAsDataURL(file);
+
+  analyzeVehicleImage(file)
+    .then((candidate) => {
+      elements.vehicleScanStatus.textContent = `Analyse réussie — proposition ${candidate.confidence}% de confiance.`;
+      setVehicleScanResult(candidate);
+    })
+    .catch((error) => {
+      elements.vehicleScanStatus.textContent = error.message || "Impossible d’analyser cette image.";
+      elements.vehicleScanResult.hidden = true;
+    });
+}
+
 async function init() {
   try {
     const [vehicleData, priceData, rateData] = await Promise.all([
@@ -283,6 +401,29 @@ async function init() {
     elements.fuelPrice.addEventListener("change", updateCalculation);
     elements.electricityRate.addEventListener("change", updateCalculation);
     elements.customElectricityPrice.addEventListener("input", updateCalculation);
+    elements.photoTrigger.addEventListener("click", () => {
+      elements.vehicleImageInput.setAttribute("capture", "environment");
+      elements.vehicleImageInput.click();
+    });
+    elements.uploadTrigger.addEventListener("click", () => {
+      elements.vehicleImageInput.removeAttribute("capture");
+      elements.vehicleImageInput.click();
+    });
+    elements.vehicleImageInput.addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      handleFileSelection(file);
+    });
+    elements.vehicleScanApply.addEventListener("click", () => {
+      if (!detectedVehicleCandidate) return;
+      elements.vehicleScanStatus.textContent = "Véhicule validé. Remplissage des filtres…";
+      applyVehicleCandidate(detectedVehicleCandidate);
+      elements.vehicleScanResult.hidden = true;
+    });
+    elements.vehicleScanRetry.addEventListener("click", () => {
+      elements.vehicleImageInput.value = "";
+      elements.vehicleScanResult.hidden = true;
+      elements.vehicleScanStatus.textContent = "Choisissez une autre image ou prenez une photo.";
+    });
   } catch (error) {
     elements.fuelUpdateBadge.textContent = "Données non chargées — aucune actualisation affichée.";
     elements.dataError.textContent = `${error.message} Lancez le site depuis un serveur HTTP local ou vérifiez les fichiers de données.`;

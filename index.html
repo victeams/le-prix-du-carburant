@@ -26,6 +26,30 @@
         <section class="panel">
           <h1>Calculer le coût au 100 km</h1>
 
+          <div class="scan-panel">
+            <div class="scan-header">
+              <h2>Scanner le véhicule</h2>
+              <p>Prendre une photo ou choisir une image pour proposer un véhicule et accélérer la sélection.</p>
+            </div>
+            <div class="scan-controls">
+              <button id="photo-trigger" type="button" class="scan-button primary">Prendre une photo</button>
+              <button id="upload-trigger" type="button" class="scan-button secondary">Choisir une image</button>
+              <input id="vehicle-image-input" type="file" accept="image/*" capture="environment" hidden />
+            </div>
+            <div class="scan-preview-wrap">
+              <img id="vehicle-scan-preview" alt="Aperçu du véhicule" hidden />
+            </div>
+            <div id="vehicle-scan-status" class="scan-status" aria-live="polite"></div>
+            <div id="vehicle-scan-result" class="scan-result" hidden>
+              <strong>Véhicule proposé</strong>
+              <div id="vehicle-scan-details"></div>
+              <div class="scan-actions">
+                <button id="vehicle-scan-apply" type="button" class="scan-button primary">Valider</button>
+                <button id="vehicle-scan-retry" type="button" class="scan-button secondary">Choisir une autre image</button>
+              </div>
+            </div>
+          </div>
+
           <div class="form-grid">
             <div class="field">
               <label for="vehicle-type">Type de véhicule</label>
