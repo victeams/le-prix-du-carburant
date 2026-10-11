@@ -1,144 +1,26 @@
-const vehicleData = {
-  thermal: [
-    {
-      brand: "Renault",
-      model: "Grand Scénic IV",
-      year: 2020,
-      version: "1.7 Blue dCi 120 ch",
-      type: "thermal",
-      consumption: 5.2,
-      fuel: "diesel",
-      priceKey: "gazole"
-    },
-    {
-      brand: "Renault",
-      model: "Clio V",
-      year: 2023,
-      version: "1.0 TCe 100 ch",
-      type: "thermal",
-      consumption: 4.8,
-      fuel: "essence",
-      priceKey: "sp95_e10"
-    },
-    {
-      brand: "Peugeot",
-      model: "308",
-      year: 2023,
-      version: "1.2 PureTech 130 ch",
-      type: "thermal",
-      consumption: 5.1,
-      fuel: "essence",
-      priceKey: "sp95_e10"
-    },
-    {
-      brand: "Citroën",
-      model: "C5 Aircross",
-      year: 2022,
-      version: "1.5 Blue HDi 130 ch",
-      type: "thermal",
-      consumption: 4.9,
-      fuel: "diesel",
-      priceKey: "gazole"
-    },
-    {
-      brand: "Toyota",
-      model: "Yaris",
-      year: 2023,
-      version: "1.5 Hybrid",
-      type: "thermal",
-      consumption: 3.4,
-      fuel: "essence",
-      priceKey: "sp95_e10"
-    }
-  ],
-  electric: [
-    {
-      brand: "Tesla",
-      model: "Model 3",
-      year: 2023,
-      version: "RWD 18\"",
-      type: "electric",
-      consumption: 14.8,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "Renault",
-      model: "Zoé",
-      year: 2023,
-      version: "Life 17\"",
-      type: "electric",
-      consumption: 16.0,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "Volkswagen",
-      model: "ID.3",
-      year: 2023,
-      version: "Pro 18\"",
-      type: "electric",
-      consumption: 15.5,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "Hyundai",
-      model: "Kona Electric",
-      year: 2023,
-      version: "Standard 17\"",
-      type: "electric",
-      consumption: 17.0,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    },
-    {
-      brand: "BMW",
-      model: "i4",
-      year: 2023,
-      version: "eDrive35 19\"",
-      type: "electric",
-      consumption: 16.8,
-      fuel: "electric",
-      priceKey: "edf_blue_base"
-    }
-  ]
+const elements = {
+  vehicleType: document.getElementById("vehicle-type"),
+  brand: document.getElementById("brand"),
+  model: document.getElementById("model"),
+  year: document.getElementById("year"),
+  version: document.getElementById("version"),
+  fuelField: document.getElementById("fuel-field"),
+  fuelPrice: document.getElementById("fuel-price"),
+  consumptionCustom: document.getElementById("consumption-custom"),
+  electricityFields: document.getElementById("electricity-fields"),
+  electricityRate: document.getElementById("electricity-rate"),
+  customElectricityField: document.getElementById("custom-electricity-field"),
+  customElectricityPrice: document.getElementById("custom-electricity-price"),
+  selectedConsumption: document.getElementById("selected-consumption"),
+  cost100km: document.getElementById("cost-100km"),
+  comparisonTable: document.getElementById("comparison-table"),
+  fuelUpdateBadge: document.getElementById("fuel-update-badge"),
+  dataError: document.getElementById("data-error"),
 };
 
-const fallbackPrices = {
-  gazole: 1.489,
-  sp95_e10: 1.659,
-  sp98: 1.749,
-  e85: 0.769,
-  gpl: 0.849
-};
-
-const electricityRates = {
-  edf_blue_base: 0.2167,
-  edf_blue_off_peak: 0.1637,
-  edf_tempo_blue: 0.1918,
-  edf_tempo_white: 0.2821,
-  edf_tempo_red: 0.7526,
-  public_ac: 0.35,
-  public_dc: 0.59,
-  custom: 0.2
-};
-
-// DOM Elements
-const vehicleType = document.getElementById("vehicle-type");
-const brandSelect = document.getElementById("brand");
-const modelSelect = document.getElementById("model");
-const yearSelect = document.getElementById("year");
-const versionSelect = document.getElementById("version");
-const consumptionCustom = document.getElementById("consumption-custom");
-const fuelPriceSelect = document.getElementById("fuel-price");
-const electricityRateSelect = document.getElementById("electricity-rate");
-const customElectricityPrice = document.getElementById("custom-electricity-price");
-const selectedConsumption = document.getElementById("selected-consumption");
-const cost100km = document.getElementById("cost-100km");
-const comparisonTable = document.getElementById("comparison-table");
-const fuelUpdateBadge = document.getElementById("fuel-update-badge");
-const licensePlateInput = document.getElementById("license-plate");
+let vehicles = { thermal: [], electric: [] };
+let prices = null;
+let electricityRates = null;
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("fr-FR", {
@@ -149,208 +31,258 @@ function formatCurrency(value) {
   }).format(value);
 }
 
+async function loadJson(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`Chargement de ${path} impossible (${response.status}).`);
+  return response.json();
+}
+
+function isValidPrice(value) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function priceLabel(key) {
+  const labels = {
+    gazole: "Gazole",
+    sp95_e10: "SP95-E10",
+    sp98: "SP98",
+    e85: "E85",
+    gpl: "GPL",
+  };
+  return labels[key] || key;
+}
+
 function updateFuelBadge() {
-  const now = new Date();
-  const dateText = now.toLocaleDateString("fr-FR");
-  const timeText = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  fuelUpdateBadge.textContent = `Prix des carburants mis à jour le ${dateText} à ${timeText}`;
+  if (!prices || !prices.fuels || !prices.last_updated) {
+    elements.fuelUpdateBadge.textContent = "Prix des carburants indisponibles — aucune actualisation vérifiée.";
+    return;
+  }
+
+  const date = new Date(prices.last_updated);
+  if (Number.isNaN(date.getTime())) {
+    elements.fuelUpdateBadge.textContent = "Prix des carburants chargés, date de mise à jour inconnue.";
+    return;
+  }
+  const formattedDate = new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(date);
+  elements.fuelUpdateBadge.textContent = `Prix récupérés depuis ${prices.source || "la source déclarée"} — dernière donnée : ${formattedDate} (UTC).`;
+}
+
+function getFuelPrice(key) {
+  const value = prices?.fuels?.[key];
+  return isValidPrice(value) ? value : null;
+}
+
+function getRateEntries() {
+  const rates = electricityRates?.electricity_rates;
+  if (!rates) return [];
+  const entries = [
+    ["edf_blue_base", rates.edf_blue?.name ? `${rates.edf_blue.name} - Base` : "EDF Bleu - Base", rates.edf_blue?.base_rate, 1.12],
+    ["edf_blue_off_peak", "EDF Bleu - Heures creuses", rates.edf_blue?.off_peak_hours, 1.12],
+    ["edf_tempo_blue", "EDF Tempo - Jour bleu (heures pleines)", rates.edf_tempo?.blue_day?.peak, 1.12],
+    ["edf_tempo_white", "EDF Tempo - Jour blanc (heures pleines)", rates.edf_tempo?.white_day?.peak, 1.12],
+    ["edf_tempo_red", "EDF Tempo - Jour rouge (heures pleines)", rates.edf_tempo?.red_day?.peak, 1.12],
+    ["public_ac", rates.public_chargers?.ac_standard?.name, rates.public_chargers?.ac_standard?.rate, rates.public_chargers?.ac_standard?.loss_coefficient],
+    ["public_dc", rates.public_chargers?.dc_fast_highway?.name, rates.public_chargers?.dc_fast_highway?.rate, rates.public_chargers?.dc_fast_highway?.loss_coefficient],
+  ];
+  return entries.filter(([, , rate]) => isValidPrice(rate));
+}
+
+function populateElectricityOptions() {
+  const options = getRateEntries();
+  elements.electricityRate.replaceChildren();
+  options.forEach(([key, label, rate]) => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = `${label} (${formatCurrency(rate)}/kWh)`;
+    elements.electricityRate.appendChild(option);
+  });
+  const custom = document.createElement("option");
+  custom.value = "custom";
+  custom.textContent = "Tarif personnalisé";
+  elements.electricityRate.appendChild(custom);
 }
 
 function getVehicles() {
-  return vehicleData[vehicleType.value] || vehicleData.thermal;
-}
-
-function populateBrandOptions() {
-  const brands = [...new Set(getVehicles().map((v) => v.brand))].sort();
-  brandSelect.innerHTML = "";
-  brands.forEach((brand) => {
-    const option = document.createElement("option");
-    option.value = brand;
-    option.textContent = brand;
-    brandSelect.appendChild(option);
-  });
-
-  if (brandSelect.options.length) {
-    brandSelect.value = brandSelect.options[0].value;
-    populateModelOptions();
-  }
-}
-
-function populateModelOptions() {
-  const models = [...new Set(
-    getVehicles()
-      .filter((v) => v.brand === brandSelect.value)
-      .map((v) => v.model)
-  )].sort();
-
-  modelSelect.innerHTML = "";
-  models.forEach((model) => {
-    const option = document.createElement("option");
-    option.value = model;
-    option.textContent = model;
-    modelSelect.appendChild(option);
-  });
-
-  if (modelSelect.options.length) {
-    modelSelect.value = modelSelect.options[0].value;
-    populateYearOptions();
-  }
-}
-
-function populateYearOptions() {
-  const years = [...new Set(
-    getVehicles()
-      .filter(
-        (v) => v.brand === brandSelect.value && v.model === modelSelect.value
-      )
-      .map((v) => v.year)
-  )].sort((a, b) => b - a);
-
-  yearSelect.innerHTML = "";
-  years.forEach((year) => {
-    const option = document.createElement("option");
-    option.value = year;
-    option.textContent = year;
-    yearSelect.appendChild(option);
-  });
-
-  if (yearSelect.options.length) {
-    yearSelect.value = String(yearSelect.options[0].value);
-    populateVersionOptions();
-  }
-}
-
-function populateVersionOptions() {
-  const versions = getVehicles().filter(
-    (v) =>
-      v.brand === brandSelect.value &&
-      v.model === modelSelect.value &&
-      Number(v.year) === Number(yearSelect.value)
-  );
-
-  versionSelect.innerHTML = "";
-  versions.forEach((vehicle) => {
-    const option = document.createElement("option");
-    option.value = vehicle.version;
-    option.textContent = vehicle.version;
-    versionSelect.appendChild(option);
-  });
-
-  if (versionSelect.options.length) {
-    versionSelect.value = versionSelect.options[0].value;
-  }
-
-  updateCalculation();
+  return vehicles[elements.vehicleType.value] || [];
 }
 
 function getCurrentVehicle() {
-  const vehicles = getVehicles().filter(
-    (v) =>
-      v.brand === brandSelect.value &&
-      v.model === modelSelect.value &&
-      Number(v.year) === Number(yearSelect.value)
+  return getVehicles().find((vehicle) => vehicle.id === elements.version.value) || null;
+}
+
+function getFuelKey(vehicle) {
+  const fuel = String(vehicle?.fuel_type || "").toLowerCase();
+  if (fuel.includes("diesel") || fuel.includes("gazole")) return "gazole";
+  if (fuel.includes("gpl")) return "gpl";
+  if (fuel.includes("e85") || fuel.includes("ethanol")) return "e85";
+  return "sp95_e10";
+}
+
+function fillSelect(select, options, getValue, getLabel) {
+  select.replaceChildren();
+  options.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = getValue(item);
+    option.textContent = getLabel(item);
+    select.appendChild(option);
+  });
+  select.disabled = options.length === 0;
+}
+
+function populateBrands() {
+  const brands = [...new Set(getVehicles().map((vehicle) => vehicle.brand))].sort((a, b) => a.localeCompare(b, "fr"));
+  fillSelect(elements.brand, brands, (brand) => brand, (brand) => brand);
+  populateModels();
+}
+
+function populateModels() {
+  const models = [...new Set(getVehicles().filter((vehicle) => vehicle.brand === elements.brand.value).map((vehicle) => vehicle.model))].sort((a, b) => a.localeCompare(b, "fr"));
+  fillSelect(elements.model, models, (model) => model, (model) => model);
+  populateYears();
+}
+
+function populateYears() {
+  const years = [...new Set(getVehicles()
+    .filter((vehicle) => vehicle.brand === elements.brand.value && vehicle.model === elements.model.value)
+    .map((vehicle) => vehicle.year))].sort((a, b) => b - a);
+  fillSelect(elements.year, years, (year) => String(year), (year) => String(year));
+  populateVersions();
+}
+
+function populateVersions() {
+  const matches = getVehicles().filter((vehicle) =>
+    vehicle.brand === elements.brand.value &&
+    vehicle.model === elements.model.value &&
+    String(vehicle.year) === elements.year.value
   );
-
-  const version = versionSelect.value;
-  return vehicles.find((v) => v.version === version) || vehicles[0];
+  fillSelect(elements.version, matches, (vehicle) => vehicle.id, (vehicle) => vehicle.version);
+  const vehicle = getCurrentVehicle();
+  if (vehicle && elements.vehicleType.value === "thermal") elements.fuelPrice.value = getFuelKey(vehicle);
+  updateCalculation();
 }
 
-function getConsumptionValue() {
+function getConsumption() {
+  const adjusted = Number(elements.consumptionCustom.value);
+  if (elements.consumptionCustom.value.trim() !== "" && Number.isFinite(adjusted) && adjusted > 0) return adjusted;
   const vehicle = getCurrentVehicle();
-  if (!vehicle) return 0;
+  return Number(vehicle?.consumption?.wltp_mixed) || 0;
+}
 
-  const adjusted = Number(consumptionCustom.value);
-  if (Number.isFinite(adjusted) && adjusted > 0) {
-    return adjusted;
+function getSelectedRate() {
+  if (elements.electricityRate.value === "custom") {
+    const value = Number(elements.customElectricityPrice.value);
+    return elements.customElectricityPrice.value.trim() !== "" && isValidPrice(value)
+      ? { price: value, loss: 1.12 }
+      : null;
+  }
+  const entry = getRateEntries().find(([key]) => key === elements.electricityRate.value);
+  return entry ? { price: entry[2], loss: entry[3] || 1.12 } : null;
+}
+
+function calculateThermalCost(consumption, fuelKey) {
+  const price = getFuelPrice(fuelKey);
+  return price === null ? null : consumption * price;
+}
+
+function appendRow(label, priceText, cost) {
+  const row = document.createElement("tr");
+  [label, priceText, cost === null ? "Indisponible" : formatCurrency(cost)].forEach((text) => {
+    const cell = document.createElement("td");
+    cell.textContent = text;
+    row.appendChild(cell);
+  });
+  elements.comparisonTable.appendChild(row);
+}
+
+function renderComparison(vehicle, consumption) {
+  elements.comparisonTable.replaceChildren();
+  if (!vehicle) return;
+  if (elements.vehicleType.value === "thermal") {
+    ["gazole", "sp95_e10", "sp98", "e85", "gpl"].forEach((key) => {
+      const price = getFuelPrice(key);
+      appendRow(priceLabel(key), price === null ? "Indisponible" : `${formatCurrency(price)}/L`, calculateThermalCost(consumption, key));
+    });
+    return;
   }
 
-  return Number(vehicle.consumption || 0);
-}
-
-function getElectricityRate() {
-  const selected = electricityRateSelect.value;
-  if (selected === "custom") {
-    const value = Number(customElectricityPrice.value);
-    return Number.isFinite(value) && value > 0 ? value : 0.2;
-  }
-  return electricityRates[selected] ?? 0.2167;
-}
-
-function calculateCost100km() {
-  const vehicle = getCurrentVehicle();
-  if (!vehicle) return 0;
-
-  const consumption = getConsumptionValue();
-
-  if (vehicleType.value === "thermal") {
-    const fuelKey = fuelPriceSelect.value;
-    const fuelPrice = fallbackPrices[fuelKey] ?? 1.5;
-    return consumption * fuelPrice;
-  }
-
-  const electricityPrice = getElectricityRate();
-  return consumption * 1.12 * electricityPrice;
-}
-
-function renderComparisonTable() {
-  const vehicle = getCurrentVehicle();
-  const baseConsumption = vehicle ? Number(vehicle.consumption || 0) : 0;
-
-  const rows = [
-    ["Gazole", "€/L", fallbackPrices.gazole, baseConsumption * fallbackPrices.gazole],
-    ["SP95-E10", "€/L", fallbackPrices.sp95_e10, baseConsumption * fallbackPrices.sp95_e10],
-    ["SP98", "€/L", fallbackPrices.sp98, baseConsumption * fallbackPrices.sp98],
-    ["GPL", "€/L", fallbackPrices.gpl, baseConsumption * fallbackPrices.gpl],
-    ["Recharge domicile", "€/kWh", getElectricityRate(), baseConsumption * 1.12 * getElectricityRate()],
-    ["Recharge autoroute", "€/kWh", electricityRates.public_dc, baseConsumption * 1.12 * electricityRates.public_dc],
-  ];
-
-  comparisonTable.innerHTML = "";
-
-  rows.forEach(([label, unit, price, total]) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${label}</td>
-      <td>${unit === "€/L" ? formatCurrency(price) + "/L" : formatCurrency(price) + "/kWh"}</td>
-      <td>${formatCurrency(total)}</td>
-    `;
-    comparisonTable.appendChild(row);
+  getRateEntries().forEach(([key, label, price, loss]) => {
+    appendRow(label, `${formatCurrency(price)}/kWh`, consumption * (loss || 1.12) * price);
   });
 }
 
 function updateCalculation() {
+  const electric = elements.vehicleType.value === "electric";
+  elements.fuelField.hidden = electric;
+  elements.electricityFields.hidden = !electric;
+  elements.customElectricityField.hidden = !electric || elements.electricityRate.value !== "custom";
+
   const vehicle = getCurrentVehicle();
-  if (!vehicle) return;
+  const consumption = getConsumption();
+  const unit = electric ? "kWh/100 km" : "L/100 km";
+  elements.selectedConsumption.textContent = vehicle ? `${consumption.toFixed(1)} ${unit}` : "Véhicule indisponible";
 
-  const consumption = getConsumptionValue();
-  const cost = calculateCost100km();
-  const unit = vehicleType.value === "thermal" ? "L/100 km" : "kWh/100 km";
-
-  selectedConsumption.textContent = `${consumption.toFixed(1)} ${unit}`;
-  cost100km.textContent = `${formatCurrency(cost)} / 100 km`;
-  renderComparisonTable();
+  let cost = null;
+  if (vehicle && consumption > 0) {
+    if (electric) {
+      const rate = getSelectedRate();
+      if (rate) cost = consumption * rate.loss * rate.price;
+    } else {
+      cost = calculateThermalCost(consumption, elements.fuelPrice.value);
+    }
+  }
+  elements.cost100km.textContent = cost === null ? "Prix indisponible" : `${formatCurrency(cost)} / 100 km`;
+  renderComparison(vehicle, consumption);
 }
 
-// Event listeners
-vehicleType.addEventListener("change", () => {
-  populateBrandOptions();
-  updateCalculation();
-});
+function normalizeVehicleData(data) {
+  if (!data?.vehicles || !Array.isArray(data.vehicles.thermal) || !Array.isArray(data.vehicles.electric)) {
+    throw new Error("Le fichier des véhicules n'a pas le format attendu.");
+  }
+  return {
+    thermal: data.vehicles.thermal.map((vehicle) => ({
+      ...vehicle,
+      version: `${vehicle.engine || "Version"} ${vehicle.power_hp ? `${vehicle.power_hp} ch` : ""}`.trim(),
+    })),
+    electric: data.vehicles.electric.map((vehicle) => ({
+      ...vehicle,
+      version: `${vehicle.trim || "Version"}${vehicle.wheel_size_inches ? ` ${vehicle.wheel_size_inches}"` : ""}`,
+    })),
+  };
+}
 
-brandSelect.addEventListener("change", populateModelOptions);
-modelSelect.addEventListener("change", populateYearOptions);
-yearSelect.addEventListener("change", populateVersionOptions);
-versionSelect.addEventListener("change", updateCalculation);
-consumptionCustom.addEventListener("input", updateCalculation);
-fuelPriceSelect.addEventListener("change", updateCalculation);
-electricityRateSelect.addEventListener("change", updateCalculation);
-customElectricityPrice.addEventListener("input", updateCalculation);
-
-// Initialize app
-function init() {
-  updateFuelBadge();
-  populateBrandOptions();
-  updateCalculation();
+async function init() {
+  try {
+    const [vehicleData, priceData, rateData] = await Promise.all([
+      loadJson("data/vehicles.json"),
+      loadJson("data/prices.json"),
+      loadJson("data/electricity_rates.json"),
+    ]);
+    vehicles = normalizeVehicleData(vehicleData);
+    prices = priceData;
+    electricityRates = rateData;
+    populateElectricityOptions();
+    updateFuelBadge();
+    populateBrands();
+    elements.vehicleType.addEventListener("change", populateBrands);
+    elements.brand.addEventListener("change", populateModels);
+    elements.model.addEventListener("change", populateYears);
+    elements.year.addEventListener("change", populateVersions);
+    elements.version.addEventListener("change", updateCalculation);
+    elements.consumptionCustom.addEventListener("input", updateCalculation);
+    elements.fuelPrice.addEventListener("change", updateCalculation);
+    elements.electricityRate.addEventListener("change", updateCalculation);
+    elements.customElectricityPrice.addEventListener("input", updateCalculation);
+  } catch (error) {
+    elements.fuelUpdateBadge.textContent = "Données non chargées — aucune actualisation affichée.";
+    elements.dataError.textContent = `${error.message} Lancez le site depuis un serveur HTTP local ou vérifiez les fichiers de données.`;
+    elements.dataError.hidden = false;
+    elements.selectedConsumption.textContent = "Données indisponibles";
+    elements.cost100km.textContent = "Calcul impossible";
+  }
 }
 
 init();
