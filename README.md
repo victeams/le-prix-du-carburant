@@ -27,7 +27,7 @@ Ouvrez ensuite <http://localhost:8000>.
 - `data/electricity_rates.json` contient des tarifs de référence indicatifs. Ils ne sont pas actualisés automatiquement ; vérifiez votre contrat et les tarifs des opérateurs avant de les utiliser.
 - `data/prices.json` contient le dernier jeu complet de prix obtenu et validé. Au départ, les prix et leur date sont volontairement vides : le site ne prétend donc pas qu'ils sont à jour.
 
-Le script `scripts/fetch_fuel_prices.py` interroge le jeu de données public français `prix-des-carburants-en-france-flux-instantane-v2` sur data.economie.gouv.fr. Il calcule les prix médians des observations trouvées pour le gazole, le SP95-E10, le SP98, l'E85 et le GPL. Il n'enregistre le nouveau fichier que si les cinq carburants ont des prix plausibles et une date de mise à jour source vérifiable. En cas d'erreur, il échoue sans remplacer les données existantes.
+Le script `scripts/fetch_fuel_prices.py` télécharge l'export JSON complet du jeu de données public français `prix-des-carburants-en-france-flux-instantane-v2` sur data.economie.gouv.fr. Il calcule les prix médians des observations trouvées pour le gazole, le SP95-E10, le SP98, l'E85 et le GPL. Il n'enregistre le nouveau fichier que si les cinq carburants ont des prix plausibles et une date de mise à jour source vérifiable. En cas d'erreur, il échoue sans remplacer les données existantes.
 
 L'actualisation automatisée est définie dans `.github/workflows/update_prices.yml` :
 
