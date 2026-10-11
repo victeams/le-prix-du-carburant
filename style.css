@@ -140,6 +140,56 @@ select:focus {
   border-color: var(--accent);
 }
 
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plate-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.plate-scan {
+  margin-top: 14px;
+}
+
+.scan-button {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plate-result {
+  margin: 16px 0 0;
+  font-weight: 600;
+}
+
+.plate-result:empty {
+  display: none;
+}
+
+.plate-result.is-valid {
+  color: #176b38;
+}
+
+.plate-result.is-invalid {
+  color: #a12626;
+}
+
 .section-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

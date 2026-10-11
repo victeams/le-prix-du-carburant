@@ -6,6 +6,7 @@
     <title>Le prix du carburant</title>
     <meta name="description" content="Calculer et comparer le coût au 100 km des véhicules thermiques et électriques." />
     <link rel="stylesheet" href="style.css" />
+    <script src="plate.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -23,6 +24,23 @@
       <p id="data-error" class="data-error" role="alert" hidden></p>
 
       <main class="container">
+        <section class="panel" aria-labelledby="plate-heading">
+          <h1 id="plate-heading">Tester une plaque française</h1>
+          <form id="plate-form" class="plate-form" novalidate>
+            <div class="field">
+              <label for="plate-number">Plaque d’immatriculation (format SIV)</label>
+              <input id="plate-number" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9" placeholder="AA-123-AA" aria-describedby="plate-result" />
+            </div>
+            <button type="submit">Vérifier</button>
+          </form>
+          <div class="plate-scan">
+            <label class="scan-button" for="plate-photo">📷 Scanner une plaque (photo)</label>
+            <input id="plate-photo" type="file" accept="image/*" capture="environment" hidden />
+          </div>
+          <p id="plate-result" class="plate-result" role="status" aria-live="polite"></p>
+          <p id="plate-vehicle" class="plate-result" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="panel">
           <h1>Calculer le coût au 100 km</h1>
 
