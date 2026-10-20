@@ -1,12 +1,12 @@
 {
-  "last_updated": null,
+  "last_updated": "2026-10-20T12:49:37Z",
   "fuels": {
-    "gazole": null,
-    "sp95_e10": null,
-    "sp98": null,
-    "e85": null,
-    "gpl": null
+    "gazole": 2.369,
+    "sp95_e10": 2.169,
+    "sp98": 2.288,
+    "e85": 0.884,
+    "gpl": 1.06
   },
-  "source": null,
-  "status": "unavailable"
+  "source": "data.economie.gouv.fr — prix médians des observations disponibles",
+  "status": "available"
 }
